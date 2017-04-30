@@ -1,64 +1,78 @@
+"use strict";
 function Triangle(sideC, angleA, angleB) {
-	this.sideC = sideC == undefined ? 0.0 : sideC;
-	this.angleA = angleA == undefined ? 0.0 : angleA;
-	this.angleB = angleB == undefined ? 0.0 : angleB;
+	this.sideC = sideC === undefined ? 0.0 : sideC;
+	this.angleA = angleA === undefined ? 0.0 : angleA;
+	this.angleB = angleB === undefined ? 0.0 : angleB;
 	
-	this.angleC = function()
-	{
+	this.angleC = function ()
+	{ 
 		return 180 - this.angleA - this.angleB;
 	};
 	
 	this.angleToRad = function(angle)
 	{
-		return angle*3.14/180;
+		return angle*3.141592/180;
 	};
-	this.sideA = function()
+	this.sideA = function ()
 	{
 		var angA = this.angleToRad(this.angleA);
 		var angC = this.angleToRad(this.angleC());
 		return (Math.sin(angA)/Math.sin(angC)) * this.sideC;
 	};
-	this.sideB = function()
+	this.sideB = function ()
 	{
 		var angB = this.angleToRad(this.angleB);
 		var angC = this.angleToRad(this.angleC());
 		return (Math.sin(angB)/Math.sin(angC)) * this.sideC;
 	};
-	this.medianA = function()
+	this.medianA = function ()
 	{
 		return 0.5*Math.sqrt(2*this.sideC*this.sideC + 2 *this.sideB()*this.sideB() - this.sideA()*this.sideA());
 	}
-	this.medianB = function()
+	this.medianB = function ()
 	{
 		return 0.5*Math.sqrt(2*this.sideC*this.sideC + 2 *this.sideA()*this.sideA() - this.sideB()*this.sideB());
 	}
-	this.medianC = function()
+	this.medianC = function ()
 	{
 		return 0.5*Math.sqrt(2*this.sideA()*this.sideA() + 2 *this.sideB()*this.sideB() - this.sideC*this.sideC);
 	}
 	
-	this.perimeter = function() {
+	this.perimeter = function () {
 		return this.sideC + this.sideA() + this.sideB();
 	};
 }
 
-function TriangleView(a, b, c) {
+function TriangleView (a, b, c) {
 	Triangle.call(this, a, b, c);
 
 	this.createOperationView = function(rowIndex) {
 		var view = document.createDocumentFragment();
 		
 		var deleteButton = document.createElement("button");
+		var setButton = document.createElement("button");
+		var valInput = document.createElement("input");
+		
+		
 		deleteButton.appendChild(document.createTextNode("Delete"));
+		setButton.appendChild(document.createTextNode("Set Base"));
+		valInput.type = "number";
+		valInput.id = "setVal" + rowIndex.toString();
+		
 		deleteButton.addEventListener("click", function() {
 			data.deleteTriangle(rowIndex);
 		});
+		setButton.addEventListener("click", function() {
+			data.setSide(rowIndex);
+		});
+		
 		view.appendChild(deleteButton);
-
+		view.appendChild(setButton);
+		view.appendChild(valInput);
 		return view;
 	}
-
-	this.createRow = function(rowIndex) {
+	
+	this.createRow = function (rowIndex) {
 	    var tr = document.createElement('tr');
 	    tr.id = "row_" + rowIndex;
 
@@ -115,7 +129,7 @@ function TriangleView(a, b, c) {
 
 }
 
-function getRandom() {
+function getRandom () {
 	return Math.round(Math.random()*100)+1;
 }
 
@@ -126,7 +140,8 @@ var data = {
 		new TriangleView(20,60,60)
 	],
 	
-	refreshTable : function() {
+
+	refreshTable : function () {
 		var tableBody = document.getElementById('triangles');
 		tableBody.innerHTML = '';
 		for(var i = 0; i < this.triangles.length; ++i) {
@@ -134,53 +149,61 @@ var data = {
 		}
 	},
 
-	add : function(sideC, angleA, angleB) {
+	add : function (sideC, angleA, angleB) {
 		this.triangles.push(new TriangleView(sideC, angleA, angleB));
 		this.refreshTable();
 	},
-	addCustom : function() {
-		do{
-			var sC = Number(prompt('Input side C: ', 10));
-		}while(sC<=0)
-		do{
-			var angA = Number(prompt('Input angle A: ', 60));
-			var angB = Number(prompt('Input angle B: ', 60));
-		}while((angA+angB)>=180 || angA<=0 || angB <=0)
-		this.add(sC, angA, angB);
+	addCustom : function () {
+		var sC = parseInt(document.getElementById('custBase').value);
+		var angA = parseInt(document.getElementById('custAngA').value);
+		var angB = parseInt(document.getElementById('custAngB').value);
+		if(sC>0&&angA>0&&angB>0&&angA+angB<180)
+			this.add(sC, angA, angB);
+		this.refreshTable();
 	},
-	addRandom : function() {
+	addRandom : function () {
 		var angA = Math.round(Math.random()*90)+1;
 		var angB = Math.round(Math.random()*89)+1;
 		this.add(getRandom(), angA, angB);
 	},
 
-	deleteTriangle : function(index) {
+	deleteTriangle : function (index) {
 		this.triangles.splice(index, 1);
 		this.refreshTable();
 	},
-	similarityCheck : function() {
-		do{
-			var ind1 = parseInt(prompt('Select first triangle: ',0));
-			var ind2 = parseInt(prompt('Select second triangle: ',0));
-		}while(ind1<0||ind2<0||ind1>=this.triangles.length||ind2>=this.triangles.length)
-		var min1 = triangles[ind1].angleA;
-		var max1 = triangles[ind1].angleA;
-		var min2 = triangles[ind2].angleA;
-		var max2 = triangles[ind2].angleA;
-		if(triangles[ind1].angleB < min1) min1 = triangles[ind1].angleB;
-		if(triangles[ind1].angleC() < min1) min1 = triangles[ind1].angleC();
-		if(triangles[ind2].angleB < min2) min2 = triangles[ind2].angleB;
-		if(triangles[ind2].angleC() < min2) min2 = triangles[ind2].angleC();
-		if(triangles[ind1].angleB > max1) max1 = triangles[ind1].angleB;
-		if(triangles[ind1].angleC() > max1) max1 = triangles[ind1].angleC();
-		if(triangles[ind2].angleB > max1) max2 = triangles[ind2].angleB;
-		if(triangles[ind2].angleC() > max1) max2 = triangles[ind2].angleC();
-		if(min1===min2 && max1===max2)
-			alert('The triangles are similar');
-		else
-			alert('The triangles are not similar');
+	setSide: function(index){
+		if(index>-1 && index<this.triangles.length)
+		{
+			this.triangles[index].sideC = parseInt(document.getElementById("setVal"+index.toString()).value);
+			this.refreshTable();
+		}
 	},
-	clear : function() {
+	similarityCheck : function () {
+		var ind1 = parseInt(document.getElementById('comp1').value);
+		var ind2 = parseInt(document.getElementById('comp2').value);
+		if(ind1<0 || ind1>=this.triangles.length||ind2<0 || ind2>=this.triangles.length||ind1===undefined||ind2===undefined)
+		{
+			document.getElementById('compRes').value = "Invalid index";
+			return 0;
+		}
+		var min1 = this.triangles[ind1].angleA;
+		var max1 = min1;
+		var min2 = this.triangles[ind2].angleA;
+		var max2 = min2;
+		if(this.triangles[ind1].angleB < min1) min1 = this.triangles[ind1].angleB;
+		if(this.triangles[ind1].angleC() < min1) min1 = this.triangles[ind1].angleC();
+		if(this.triangles[ind2].angleB < min2) min2 = this.triangles[ind2].angleB;
+		if(this.triangles[ind2].angleC() < min2) min2 = this.triangles[ind2].angleC();
+		if(this.triangles[ind1].angleB > max1) max1 = this.triangles[ind1].angleB;
+		if(this.triangles[ind1].angleC() > max1) max1 = this.triangles[ind1].angleC();
+		if(this.triangles[ind2].angleB > max2) max2 = this.triangles[ind2].angleB;
+		if(this.triangles[ind2].angleC() > max2) max2 = this.triangles[ind2].angleC();
+		if(min1===min2 && max1===max2)
+			document.getElementById('compRes').value = "Triangles are similar";
+		else
+			document.getElementById('compRes').value = "Triangles are not similar";
+	},
+	clear : function () {
 		this.triangles = [];
 		this.refreshTable();
 	}
